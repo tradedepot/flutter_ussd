@@ -10,16 +10,16 @@ class FlutterUssd {
   ///This methods requires the permission android.permission.CALL_PHONE to be
   ///grandted
   ///
-  static Future<String> dial(String ussd) async {
-    final String response = await _channel.invokeMethod('dial', {'ussd': ussd});
+  static Future<String?> dial(String ussd) async {
+    final String? response = await _channel.invokeMethod('dial', {'ussd': ussd});
     return response;
   }
 
   ///
   /// Checks if this method is supported on this device
   ///
-  static Future<bool> isSupported() async {
-    final bool response = await _channel.invokeMethod('isSupported');
+  static Future<bool?> isSupported() async {
+    final bool? response = await _channel.invokeMethod('isSupported');
     return response;
   }
 }
