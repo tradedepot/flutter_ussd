@@ -98,7 +98,7 @@ public class USSDHandler implements MethodChannel.MethodCallHandler {
                 public void onReceiveUssdResponseFailed(TelephonyManager telephonyManager, String request, int failureCode) {
                     super.onReceiveUssdResponseFailed(telephonyManager, request, failureCode);
                     Log.e("ussd","failed with code " + Integer.toString(failureCode));
-                    result.error("dial", "peerConnection is null", Integer.toString(failureCode));
+                    result.error("dial", "Failed to send ussd request. Error code: ", Integer.toString(failureCode));
                 }
             }, handler);
         }
