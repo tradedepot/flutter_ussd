@@ -19,12 +19,11 @@ import java.util.List;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.PluginRegistry;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 public class USSDHandler implements MethodChannel.MethodCallHandler {
     private Handler handler;
     private Activity activity;
+    private MethodChannel.Result mResult;
 
 
     USSDHandler() {
@@ -50,7 +49,7 @@ public class USSDHandler implements MethodChannel.MethodCallHandler {
                 requestPermissions.add(Manifest.permission.CALL_PHONE);
                 requestPermissions(
                         requestPermissions,
-                        /* successCallback */ new Callback() {
+                        new Callback() {
                             @Override
                             public void invoke(Object... args) {
                                 List<String> grantedPermissions = (List<String>) args[0];
@@ -64,12 +63,12 @@ public class USSDHandler implements MethodChannel.MethodCallHandler {
                                 sendUSSD(ussd, result);
                             }
                         },
-                        /* errorCallback */ new Callback() {
+                       new Callback() {
                             @Override
                             public void invoke(Object... args) {
                                 result.error(
                                         /* type */ "PermissionError",
-                                        "Failed to save file", null);
+                                        "Failed to dial ussd", null);
                             }
                         }
                 );
@@ -86,21 +85,34 @@ public class USSDHandler implements MethodChannel.MethodCallHandler {
     private void sendUSSD(final String ussd, final @NonNull MethodChannel.Result result) {
         final TelephonyManager telephonyManager = (TelephonyManager)getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mResult = result;
             telephonyManager.sendUssdRequest(ussd, new TelephonyManager.UssdResponseCallback() {
                 @Override
                 public void onReceiveUssdResponse(TelephonyManager telephonyManager, String request, CharSequence response) {
                     super.onReceiveUssdResponse(telephonyManager, request, response);
+                    final MethodChannel.Result _result = mResult;
+                    if (_result == null) {
+                        return;
+                    }
+                    mResult = null;
                     Log.d("ussd", "Success with response : " + response);
-                    result.success(response);
+                    _result.success(response);
                 }
 
                 @Override
                 public void onReceiveUssdResponseFailed(TelephonyManager telephonyManager, String request, int failureCode) {
                     super.onReceiveUssdResponseFailed(telephonyManager, request, failureCode);
+                    final MethodChannel.Result _result = mResult;
+                    if (_result == null) {
+                        return;
+                    }
+                    mResult = null;
                     Log.e("ussd","failed with code " + Integer.toString(failureCode));
-                    result.error("dial", "Failed to send ussd request. Error code: ", Integer.toString(failureCode));
+                    _result.error("dial", "Failed to send ussd request. Error code: ", Integer.toString(failureCode));
                 }
             }, handler);
+        } else {
+            result.error("dial", "Failed to send ussd request. Error code: Unsupported ", -1);
         }
     }
 
